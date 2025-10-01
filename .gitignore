@@ -1,0 +1,21 @@
+# Node modules
+node_modules/
+
+# Build outputs
+built/
+editor/bundle.js
+editor/bundle.js.map
+
+# MakeCode
+.header.json
+.simstate.json
+
+# Editor
+.DS_Store
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
