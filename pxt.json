@@ -1,0 +1,23 @@
+{
+    "name": "drum-machine",
+    "version": "0.1.0",
+    "description": "A visual drum machine extension for MakeCode Arcade with clickable grid interface",
+    "license": "MIT",
+    "dependencies": {
+        "device": "*"
+    },
+    "files": [
+        "README.md",
+        "main.ts"
+    ],
+    "testFiles": [],
+    "public": true,
+    "targetVersions": {
+        "target": "1.12.30",
+        "targetId": "arcade"
+    },
+    "supportedTargets": [
+        "arcade"
+    ],
+    "preferredEditor": "tsprj"
+}
