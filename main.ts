@@ -29,19 +29,54 @@ namespace drumMachine {
     let isPlaying = false;
 
     /**
-     * Create a drum pattern using a visual grid
-     * Click squares to toggle drum hits on/off
-     * Bottom row = Kick, Middle row = Snare, Top row = Hi-hat
+     * Create an empty drum pattern
      */
-    //% block="drum pattern $pattern"
-    //% pattern.fieldEditor="imageLiteral"
-    //% pattern.fieldOptions.columns=4
-    //% pattern.fieldOptions.rows=3
+    //% block="create drum pattern"
     //% blockId=drumMachine_createPattern
     //% weight=100
+    //% blockSetVariable=myPattern
     //% group="Patterns"
-    export function createDrumPattern(pattern: string): string {
-        return pattern;
+    export function createDrumPattern(): number[] {
+        // 12 values: 3 drums × 4 steps, all off initially
+        return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    }
+
+    /**
+     * Set a drum hit in the pattern
+     * @param pattern the drum pattern
+     * @param voice which drum
+     * @param step which step (1-4)
+     * @param on whether the drum is on or off
+     */
+    //% block="in $pattern set $voice at step $step to $on"
+    //% pattern.shadow=variables_get
+    //% pattern.defl=myPattern
+    //% step.min=1 step.max=4 step.defl=1
+    //% on.shadow=toggleOnOff
+    //% on.defl=true
+    //% weight=95
+    //% group="Patterns"
+    export function setDrumHit(pattern: number[], voice: DrumVoice, step: number, on: boolean): void {
+        const index = voice * 4 + (step - 1);
+        pattern[index] = on ? 1 : 0;
+    }
+
+    /**
+     * Get whether a drum is active at a step
+     * @param pattern the drum pattern
+     * @param voice which drum
+     * @param step which step (1-4)
+     */
+    //% block="in $pattern get $voice at step $step"
+    //% pattern.shadow=variables_get
+    //% pattern.defl=myPattern
+    //% step.min=1 step.max=4 step.defl=1
+    //% weight=94
+    //% group="Patterns"
+    //% advanced=true
+    export function getDrumHit(pattern: number[], voice: DrumVoice, step: number): boolean {
+        const index = voice * 4 + (step - 1);
+        return pattern[index] === 1;
     }
 
     /**
@@ -54,8 +89,9 @@ namespace drumMachine {
     //% loop.defl=false
     //% weight=90
     //% group="Playback"
-    //% pattern.shadow=drumMachine_createPattern
-    export function playDrumPattern(pattern: string, bpm: number, loop: boolean = false): void {
+    //% pattern.shadow=variables_get
+    //% pattern.defl=myPattern
+    export function playDrumPattern(pattern: number[], bpm: number, loop: boolean = false): void {
         isPlaying = true;
 
         // Calculate step duration in milliseconds
@@ -63,22 +99,20 @@ namespace drumMachine {
         const beatDuration = 60000 / bpm;
         const stepDuration = beatDuration / 4;
 
-        // Parse pattern string into grid
-        const grid = parsePattern(pattern);
-
         do {
             // Play through all 4 steps
             for (let step = 0; step < 4; step++) {
                 if (!isPlaying) break;
 
-                // Play each voice if active at this step
-                if (grid[2][step]) {  // Kick (bottom row)
+                // Check each voice at this step
+                // Pattern layout: [kick0,kick1,kick2,kick3, snare0,snare1,snare2,snare3, hihat0,hihat1,hihat2,hihat3]
+                if (pattern[DrumVoice.Kick * 4 + step]) {  // Kick
                     music.playTone(kickFreq, kickDuration);
                 }
-                if (grid[1][step]) {  // Snare (middle row)
+                if (pattern[DrumVoice.Snare * 4 + step]) {  // Snare
                     music.playTone(snareFreq, snareDuration);
                 }
-                if (grid[0][step]) {  // Hi-hat (top row)
+                if (pattern[DrumVoice.HiHat * 4 + step]) {  // Hi-hat
                     music.playTone(hihatFreq, hihatDuration);
                 }
 
@@ -191,38 +225,6 @@ namespace drumMachine {
         snareDuration = 110;
         hihatFreq = 9000;
         hihatDuration = 55;
-    }
-
-    /**
-     * Helper function to parse the pattern string into a 2D grid
-     * The imageLiteral format uses characters 0-9 where 0=off and 1-9=on
-     */
-    function parsePattern(pattern: string): boolean[][] {
-        // Initialize 3x4 grid (3 voices, 4 steps)
-        const grid: boolean[][] = [
-            [false, false, false, false],  // Hi-hat (row 0)
-            [false, false, false, false],  // Snare (row 1)
-            [false, false, false, false]   // Kick (row 2)
-        ];
-
-        // Remove any whitespace and newlines
-        const cleaned = pattern.replace(/\s/g, '');
-
-        // Parse the string: imageLiteral typically encodes as a sequence
-        // We expect 12 characters (3 rows × 4 columns)
-        let index = 0;
-        for (let row = 0; row < 3; row++) {
-            for (let col = 0; col < 4; col++) {
-                if (index < cleaned.length) {
-                    const char = cleaned.charAt(index);
-                    // Any non-zero character means the drum is active
-                    grid[row][col] = (char !== '0' && char !== '.' && char !== ' ');
-                    index++;
-                }
-            }
-        }
-
-        return grid;
     }
 
     /**
